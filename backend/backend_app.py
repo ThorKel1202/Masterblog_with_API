@@ -52,29 +52,39 @@ def get_post_posts():
 
         POSTS.append(new_post)
         return jsonify(new_post), 201
-    
-    
-@app.route("/api/posts/<int:id>", methods=["DELETE"])
-def delete_post(id):
-    """Deletes a specific blog post based on its ID.
+
+
+@app.route("/api/posts/<int:id>", methods=["PUT", "DELETE"])
+def update_or_delete_post(id):
+    """Updates or deletes a blog post based on its ID.
 
     Args:
-        id (int): The unique ID of the post to be deleted.
+        id (int): The unique ID of the affected post.
 
     Returns:
-        tuple: JSON response with a success or error message and an HTTP status code.
+        tuple: JSON response containing the post data or a message (indicating success or failure),
+        as well as the HTTP status code.
     """
+    
     for post in POSTS:
         if post["id"] == id:
-            POSTS.remove(post)
-            return jsonify({
-                "message": f"Post with id {id} has been deleted successfully."
-            }), 200
+            if request.method == "DELETE":
+                POSTS.remove(post)
+                return jsonify({
+                    "message": f"Post with id {id} has been deleted successfully."
+                }), 200
+
+            if request.method == "PUT":
+                data = request.get_json()
+                if "title" in data:
+                    post["title"] = data["title"]
+                if "content" in data:
+                    post["content"] = data["content"]
+                return jsonify(post), 200
 
     return jsonify({
         "error": f"Post with id {id} was not found."
     }), 404
-
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5002, debug=True)
