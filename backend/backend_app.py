@@ -54,6 +54,32 @@ def get_post_posts():
         return jsonify(new_post), 201
 
 
+@app.route("/api/posts/search", methods=["GET"])
+def search_posts():
+    """Search for blog posts by title or content.
+
+    Accepts the query parameters 'title' and 'content' via the URL.
+    The search is case-insensitive.
+
+    Returns:
+        tuple: List of matching posts as a JSON response
+            and HTTP status code 200.
+    """
+    
+    title_query = request.args.get("title", "").lower()
+    content_query = request.args.get("content", "").lower()
+    results = []
+
+    for post in POSTS:
+        title_matches = title_query and title_query in post["title"].lower()
+        content_matches = content_query and content_query in post["content"].lower()
+
+        if title_matches or content_matches:
+            results.append(post)
+
+    return jsonify(results), 200
+
+
 @app.route("/api/posts/<int:id>", methods=["PUT", "DELETE"])
 def update_or_delete_post(id):
     """Updates or deletes a blog post based on its ID.
@@ -63,7 +89,7 @@ def update_or_delete_post(id):
 
     Returns:
         tuple: JSON response containing the post data or a message (indicating success or failure),
-        as well as the HTTP status code.
+            as well as the HTTP status code.
     """
     
     for post in POSTS:
@@ -85,6 +111,7 @@ def update_or_delete_post(id):
     return jsonify({
         "error": f"Post with id {id} was not found."
     }), 404
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5002, debug=True)
