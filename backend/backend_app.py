@@ -1,38 +1,44 @@
+from datetime import datetime
+import json
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
-from datetime import datetime
+
+
+def load_posts():
+    """Lädt die Blog-Beiträge aus der JSON-Datei.
+
+    Returns:
+        list: Eine Liste von Dictionaries, die die Beiträge repräsentieren.
+    """
+    try:
+        with open("posts.json", "r", encoding="utf-8") as file:
+            return json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+
+def save_posts(posts):
+    """Speichert die Blog-Beiträge in die JSON-Datei.
+
+    Args:
+        posts (list): Die Liste der zu speichernden Beiträge.
+    """
+    with open("posts.json", "w", encoding="utf-8") as file:
+        json.dump(posts, file, indent=4, ensure_ascii=False)
+
 
 app = Flask(__name__)
-CORS(app)  # This will enable CORS for all routes
+CORS(app)
 
-POSTS = [
-    {
-    "id": 1,
-    "title": "First post",
-    "content": "This is the first post.",
-    "author": "John",
-    "date": "2026-09-10"
-    },
-    
-    {
-    "id": 2,
-    "title": "Second post",
-    "content": "This is the second post.",
-    "author": "Lisa",
-    "date": "2026-09-09"
-    },
-]
-
-
-SWAGGER_URL="/api/docs"  # (1) swagger endpoint e.g. HTTP://localhost:5002/api/docs
-API_URL="/static/masterblog.json" # (2) ensure you create this dir and file
+SWAGGER_URL = "/api/docs"
+API_URL = "/static/masterblog.json"
 
 swagger_ui_blueprint = get_swaggerui_blueprint(
     SWAGGER_URL,
     API_URL,
     config={
-        'app_name': 'Masterblog API' # (3) You can change this if you like
+        "app_name": "Masterblog API"
     }
 )
 app.register_blueprint(swagger_ui_blueprint, url_prefix=SWAGGER_URL)
@@ -40,23 +46,24 @@ app.register_blueprint(swagger_ui_blueprint, url_prefix=SWAGGER_URL)
 
 @app.route("/api/posts", methods=["GET", "POST"])
 def get_post_posts():
-    """Manages the retrieval and creation of blog posts.
+    """Verwaltet das Abrufen und Erstellen von Blog-Beiträgen.
 
-    GET: Returns a list of all existing posts, optionally sorted by 'title'
-        or 'content' and 'direction' ('asc' or 'desc').
-    POST: Creates a new post. Requires 'title' and 'content'.
+    GET: Gibt eine Liste aller Beiträge zurück, optional sortiert nach 'title',
+        'content', 'author' oder 'date' und 'direction' ('asc' oder 'desc').
+    POST: Erstellt einen neuen Beitrag. Erfordert 'title', 'content',
+        'author' und 'date'.
 
     Returns:
-        tuple: JSON response and HTTP status code.
+        tuple: JSON-Response und HTTP-Statuscode.
     """
-    
     if request.method == "GET":
+        posts = load_posts()
         sort = request.args.get("sort")
         direction = request.args.get("direction", "asc")
-        
+
         if sort is None:
-            return jsonify(POSTS)
-        
+            return jsonify(posts)
+
         if sort not in ["title", "content", "author", "date"]:
             return jsonify({
                 "error": (
@@ -64,53 +71,60 @@ def get_post_posts():
                     "Use 'title', 'content', 'author', or 'date'."
                 )
             }), 400
-        
+
         if direction not in ["asc", "desc"]:
             return jsonify({
                 "error": "Invalid direction. Use 'asc' or 'desc'."
             }), 400
-        
+
         if sort == "date":
             sorted_posts = sorted(
-                POSTS,
-                key=lambda post: datetime.strptime(
-                    post["date"], "%Y-%m-%d"
-                ),
+                posts,
+                key=lambda post: datetime.strptime(post["date"], "%Y-%m-%d"),
                 reverse=(direction == "desc")
             )
         else:
             sorted_posts = sorted(
-                POSTS,
+                posts,
                 key=lambda post: post[sort].lower(),
                 reverse=(direction == "desc")
             )
-        
+
         return jsonify(sorted_posts)
 
     if request.method == "POST":
         data = request.get_json()
+        
         title = data.get("title")
         content = data.get("content")
         author = data.get("author")
-        date = data.get("date")
+        
         missing_fields = []
-
+        
         if not title:
             missing_fields.append("title")
+        
         if not content:
             missing_fields.append("content")
+        
         if not author:
             missing_fields.append("author")
-        if not date:
-            missing_fields.append("date")
-
+        
         if missing_fields:
             return jsonify({
                 "error": "Missing required fields",
                 "missing": missing_fields
             }), 400
-
-        new_id = max((post["id"] for post in POSTS), default=0) + 1
+        
+        posts = load_posts()
+        
+        if posts:
+            new_id = max(post["id"] for post in posts) + 1
+        else:
+            new_id = 1
+        
+        date = datetime.now().strftime("%Y-%m-%d")
+        
         new_post = {
             "id": new_id,
             "title": title,
@@ -118,28 +132,29 @@ def get_post_posts():
             "author": author,
             "date": date
         }
-
-        POSTS.append(new_post)
+        
+        posts.append(new_post)
+        
+        save_posts(posts)
+        
         return jsonify(new_post), 201
 
 
 @app.route("/api/posts/search", methods=["GET"])
 def search_posts():
-    """Search for blog posts in all post fields.
+    """Sucht nach Blog-Beiträgen in allen Textfeldern.
 
-    Accepts the query parameter 'search' via the URL.
-    The search is case-insensitive and checks title, content,
-    author, and date.
+    Akzeptiert den Query-Parameter 'search' über die URL. Die Suche ignoriert
+    Groß- und Kleinschreibung und prüft Titel, Inhalt, Autor und Datum.
 
     Returns:
-        tuple: List of matching posts as a JSON response
-            and HTTP status code 200.
+        tuple: JSON-Response mit passenden Beiträgen und Statuscode 200.
     """
-
     search_query = request.args.get("search", "").lower()
+    posts = load_posts()
     results = []
 
-    for post in POSTS:
+    for post in posts:
         title_matches = search_query in post["title"].lower()
         content_matches = search_query in post["content"].lower()
         author_matches = search_query in post["author"].lower()
@@ -158,20 +173,21 @@ def search_posts():
 
 @app.route("/api/posts/<int:id>", methods=["PUT", "DELETE"])
 def update_or_delete_post(id):
-    """Updates or deletes a blog post based on its ID.
+    """Aktualisiert oder löscht einen Blog-Beitrag anhand seiner ID.
 
     Args:
-        id (int): The unique ID of the affected post.
+        id (int): Die eindeutige ID des betroffenen Beitrags.
 
     Returns:
-        tuple: JSON response containing the post data or a message (indicating success or failure),
-            as well as the HTTP status code.
+        tuple: JSON-Response und der HTTP-Statuscode.
     """
-    
-    for post in POSTS:
+    posts = load_posts()
+
+    for post in posts:
         if post["id"] == id:
             if request.method == "DELETE":
-                POSTS.remove(post)
+                posts.remove(post)
+                save_posts(posts)
                 return jsonify({
                     "message": f"Post with id {id} has been deleted successfully."
                 }), 200
@@ -184,8 +200,10 @@ def update_or_delete_post(id):
                     post["content"] = data["content"]
                 if "author" in data:
                     post["author"] = data["author"]
-                if "date" in data:
-                    post["date"] = data["date"]
+                
+                post["date"] = datetime.now().strftime("%Y-%m-%d")
+
+                save_posts(posts)
                 return jsonify(post), 200
 
     return jsonify({
@@ -193,5 +211,5 @@ def update_or_delete_post(id):
     }), 404
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5002, debug=True)

@@ -102,8 +102,7 @@
               "required": [
                 "title",
                 "content",
-                "author",
-                "date"
+                "author"
               ],
               "properties": {
                 "title": {
@@ -116,7 +115,8 @@
                   "type": "string"
                 },
                 "date": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "Automatically generated when the post is created."
                 }
               }
             }
@@ -143,8 +143,8 @@
         ],
         "parameters": [
           {
-            "in": "query",
             "name": "search",
+            "in": "query",
             "type": "string",
             "required": true,
             "description": "Search term for title, content, author, or date"
@@ -183,6 +183,7 @@
     "/api/posts/{id}": {
       "put": {
         "summary": "Update a post",
+        "description": "Update one or more fields. The date is automatically updated to the current date.",
         "tags": [
           "Post"
         ],
@@ -213,9 +214,6 @@
                   "type": "string"
                 },
                 "author": {
-                  "type": "string"
-                },
-                "date": {
                   "type": "string"
                 }
               }
