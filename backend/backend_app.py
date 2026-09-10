@@ -14,7 +14,8 @@ POSTS = [
 def get_post_posts():
     """Manages the retrieval and creation of blog posts.
 
-    GET: Returns a list of all existing posts.
+    GET: Returns a list of all existing posts, optionally sorted by 'title'
+        or 'content' and 'direction' ('asc' or 'desc').
     POST: Creates a new post. Requires 'title' and 'content'.
 
     Returns:
@@ -22,33 +23,52 @@ def get_post_posts():
     """
     
     if request.method == "GET":
-        return jsonify(POSTS)
+        sort = request.args.get("sort")
+        direction = request.args.get("direction", "asc")
+
+        if sort is None:
+            return jsonify(POSTS)
+
+        if sort not in ["title", "content"]:
+            return jsonify({
+                "error": "Invalid sort field. Use 'title' or 'content'."
+            }), 400
+
+        if direction not in ["asc", "desc"]:
+            return jsonify({
+                "error": "Invalid direction. Use 'asc' or 'desc'."
+            }), 400
+
+        sorted_posts = sorted(
+            POSTS,
+            key=lambda post: post[sort],
+            reverse=(direction == "desc")
+        )
+        return jsonify(sorted_posts)
 
     if request.method == "POST":
         data = request.get_json()
         title = data.get("title")
         content = data.get("content")
-        
         missing_fields = []
-        
+
         if not title:
             missing_fields.append("title")
-            
         if not content:
             missing_fields.append("content")
-            
+
         if missing_fields:
             return jsonify({
                 "error": "Missing required fields",
                 "missing": missing_fields
             }), 400
 
-        if POSTS:
-            new_id = max(post["id"] for post in POSTS) + 1
-        else:
-            new_id = 1
-            
-        new_post = {"id": new_id, "title": title, "content": content}
+        new_id = max((post["id"] for post in POSTS), default=0) + 1
+        new_post = {
+            "id": new_id,
+            "title": title,
+            "content": content
+        }
 
         POSTS.append(new_post)
         return jsonify(new_post), 201
