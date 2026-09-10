@@ -30,7 +30,9 @@
             "required": false,
             "enum": [
               "title",
-              "content"
+              "content",
+              "author",
+              "date"
             ],
             "description": "Field to sort by"
           },
@@ -49,7 +51,30 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful operation"
+            "description": "Successful operation",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "author": {
+                    "type": "string"
+                  },
+                  "date": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid sort field or direction"
@@ -76,13 +101,21 @@
               "type": "object",
               "required": [
                 "title",
-                "content"
+                "content",
+                "author",
+                "date"
               ],
               "properties": {
                 "title": {
                   "type": "string"
                 },
                 "content": {
+                  "type": "string"
+                },
+                "author": {
+                  "type": "string"
+                },
+                "date": {
                   "type": "string"
                 }
               }
@@ -101,7 +134,7 @@
     },
     "/api/posts/search": {
       "get": {
-        "summary": "Search posts by title or content",
+        "summary": "Search posts by title, content, author, or date",
         "tags": [
           "Post"
         ],
@@ -110,21 +143,39 @@
         ],
         "parameters": [
           {
-            "name": "title",
             "in": "query",
+            "name": "search",
             "type": "string",
-            "required": false
-          },
-          {
-            "name": "content",
-            "in": "query",
-            "type": "string",
-            "required": false
+            "required": true,
+            "description": "Search term for title, content, author, or date"
           }
         ],
         "responses": {
           "200": {
-            "description": "Successful operation"
+            "description": "Successful operation",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "author": {
+                    "type": "string"
+                  },
+                  "date": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -159,6 +210,12 @@
                   "type": "string"
                 },
                 "content": {
+                  "type": "string"
+                },
+                "author": {
+                  "type": "string"
+                },
+                "date": {
                   "type": "string"
                 }
               }
