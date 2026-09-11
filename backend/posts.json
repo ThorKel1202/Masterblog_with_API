@@ -5,7 +5,7 @@
         "content": "This is the first post.",
         "author": "John",
         "date": "2026-09-10",
-        "likes": 1
+        "likes": 2
     },
     {
         "id": 2,
@@ -21,7 +21,7 @@
         "content": "Nice text, not only \"String\"",
         "author": "TK",
         "date": "2026-09-11",
-        "likes": 1
+        "likes": 2
     },
     {
         "id": 4,
@@ -32,18 +32,18 @@
         "likes": 0
     },
     {
-        "id": 5,
-        "title": "TEST TITLE",
-        "content": "This is the new text",
-        "author": "ThorKel",
-        "date": "2026-09-11",
-        "likes": 0
-    },
-    {
         "id": 6,
         "title": "Super title",
         "content": "This is super text",
         "author": "Thorsten",
         "date": "2026-09-11"
+    },
+    {
+        "id": 7,
+        "title": "Cool title",
+        "content": "Cool text",
+        "author": "Cool author",
+        "date": "2026-09-11",
+        "likes": 0
     }
 ]

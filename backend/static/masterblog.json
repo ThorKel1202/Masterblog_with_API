@@ -15,7 +15,7 @@
   "paths": {
     "/api/posts": {
       "get": {
-        "summary": "Returns all posts, sorted by title or content",
+        "summary": "Returns all posts, sorted by title, content or date",
         "tags": [
           "Post"
         ],
@@ -71,6 +71,10 @@
                   },
                   "date": {
                     "type": "string"
+                  },
+                  "likes": {
+                    "type": "integer",
+                    "description": "The number of likes this post has received."
                   }
                 }
               }
@@ -172,6 +176,9 @@
                   },
                   "date": {
                     "type": "string"
+                  },
+                  "likes": {
+                    "type": "integer"
                   }
                 }
               }

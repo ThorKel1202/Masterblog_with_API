@@ -4,6 +4,21 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
 
+app = Flask(__name__)
+CORS(app)
+
+SWAGGER_URL = "/api/docs"
+API_URL = "/static/masterblog.json"
+
+swagger_ui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={
+        "app_name": "Masterblog API"
+    }
+)
+app.register_blueprint(swagger_ui_blueprint, url_prefix=SWAGGER_URL)
+
 
 def load_posts():
     """Loads the blog posts from the JSON file.
@@ -26,22 +41,6 @@ def save_posts(posts):
     """
     with open("posts.json", "w", encoding="utf-8") as file:
         json.dump(posts, file, indent=4, ensure_ascii=False)
-
-
-app = Flask(__name__)
-CORS(app)
-
-SWAGGER_URL = "/api/docs"
-API_URL = "/static/masterblog.json"
-
-swagger_ui_blueprint = get_swaggerui_blueprint(
-    SWAGGER_URL,
-    API_URL,
-    config={
-        "app_name": "Masterblog API"
-    }
-)
-app.register_blueprint(swagger_ui_blueprint, url_prefix=SWAGGER_URL)
 
 
 @app.route("/api/posts", methods=["GET", "POST"])
@@ -94,49 +93,49 @@ def get_post_posts():
 
     if request.method == "POST":
         data = request.get_json()
-        
+
         title = data.get("title")
         content = data.get("content")
         author = data.get("author")
-        
+
         missing_fields = []
-        
+
         if not title:
             missing_fields.append("title")
-        
+
         if not content:
             missing_fields.append("content")
-        
+
         if not author:
             missing_fields.append("author")
-        
+
         if missing_fields:
             return jsonify({
                 "error": "Missing required fields",
                 "missing": missing_fields
             }), 400
-        
+
         posts = load_posts()
-        
+
         if posts:
             new_id = max(post["id"] for post in posts) + 1
         else:
             new_id = 1
-        
+
         date = datetime.now().strftime("%Y-%m-%d")
-        
+
         new_post = {
             "id": new_id,
             "title": title,
             "content": content,
             "author": author,
-            "date": date
+            "date": date,
+            "likes": 0
         }
-        
+
         posts.append(new_post)
-        
         save_posts(posts)
-        
+
         return jsonify(new_post), 201
 
 
@@ -200,7 +199,7 @@ def update_or_delete_post(id):
                     post["content"] = data["content"]
                 if "author" in data:
                     post["author"] = data["author"]
-                
+
                 post["date"] = datetime.now().strftime("%Y-%m-%d")
 
                 save_posts(posts)
@@ -213,11 +212,22 @@ def update_or_delete_post(id):
 
 @app.route("/api/posts/<int:id>/like", methods=["POST"])
 def like_post(id):
-    """Increase the number of likes for a post."""
+    """Increases the number of likes for a post.
+
+    Args:
+        id (int): The unique ID of the post to like.
+
+    Returns:
+        tuple: JSON response and the HTTP status code.
+    """
     posts = load_posts()
 
     for post in posts:
         if post["id"] == id:
+            # Falls "likes" noch nicht im Dict existiert, wird es mit 0 initialisiert (Funktionssicherung)
+            if "likes" not in post:
+                post["likes"] = 0
+
             post["likes"] += 1
             save_posts(posts)
 
@@ -230,3 +240,4 @@ def like_post(id):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5002, debug=True)
+    

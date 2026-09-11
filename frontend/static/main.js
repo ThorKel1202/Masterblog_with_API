@@ -1,24 +1,26 @@
-// Function that runs once the window is fully loaded
-window.onload = function() {
-    // Attempt to retrieve the API base URL from the local storage
-    var savedBaseUrl = localStorage.getItem('apiBaseUrl');
-    // If a base URL is found in local storage, load the posts
+// Run once the window is fully loaded
+window.onload = function () {
+    const savedBaseUrl = localStorage.getItem("apiBaseUrl");
+
     if (savedBaseUrl) {
-        document.getElementById('api-base-url').value = savedBaseUrl;
+        document.getElementById("api-base-url").value = savedBaseUrl;
         loadPosts();
     }
-}
+};
 
-// Function to display posts on the page
+
+// Display posts on the page
 function displayPosts(data) {
-    const postContainer = document.getElementById('post-container');
-    postContainer.innerHTML = '';
+    const postContainer = document.getElementById("post-container");
+
+    postContainer.innerHTML = "";
 
     data.forEach(post => {
-        const postDiv = document.createElement('div');
-        postDiv.className = 'post';
+        const postDiv = document.createElement("div");
 
-        // Mask text content to prevent XSS attacks.
+        postDiv.className = "post";
+
+        // Escape text content to prevent XSS attacks
         const safeTitle = escapeHtml(post.title);
         const safeContent = escapeHtml(post.content);
         const safeAuthor = escapeHtml(post.author);
@@ -33,6 +35,7 @@ function displayPosts(data) {
                 <span class="author">
                     Author: ${safeAuthor}
                 </span>
+
                 <span class="date">
                     Date: ${safeDate}
                 </span>
@@ -70,21 +73,33 @@ function displayPosts(data) {
     });
 }
 
-// Function to fetch all the posts from the API and display them on the page
-function loadPosts() {
-    var baseUrl = document.getElementById('api-base-url').value;
-    localStorage.setItem('apiBaseUrl', baseUrl);
 
-    fetch(baseUrl + '/posts')
-        .then(response => response.json())
+// Load all posts from the API
+function loadPosts() {
+    const baseUrl = document.getElementById("api-base-url").value;
+
+    localStorage.setItem("apiBaseUrl", baseUrl);
+
+    fetch(`${baseUrl}/posts`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(
+                    `HTTP-Fehler! Status: ${response.status}`
+                );
+            }
+
+            return response.json();
+        })
         .then(data => {
             displayPosts(data);
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+            console.error("Error loading posts:", error);
+        });
 }
 
 
-// Function that searches for blog posts
+// Search for blog posts
 function searchPosts() {
     const baseUrl = document.getElementById("api-base-url").value;
     const searchQuery = document.getElementById("search-input").value;
@@ -113,6 +128,8 @@ function searchPosts() {
             }
 
             displayPosts(data);
+
+            // Clear the search field after a successful search
             document.getElementById("search-input").value = "";
         })
         .catch(error => {
@@ -121,7 +138,7 @@ function searchPosts() {
 }
 
 
-// Function to sort blog posts
+// Sort blog posts
 function sortPosts(sortField, direction) {
     const baseUrl = document.getElementById("api-base-url").value;
 
@@ -134,6 +151,7 @@ function sortPosts(sortField, direction) {
                     `HTTP-Fehler! Status: ${response.status}`
                 );
             }
+
             return response.json();
         })
         .then(data => {
@@ -142,9 +160,9 @@ function sortPosts(sortField, direction) {
                     document.getElementById("post-container");
 
                 postContainer.innerHTML =
-                    "<p class='no-results'>"
-                    + "No posts available to sort."
-                    + "</p>";
+                    "<p class='no-results'>" +
+                    "No posts available to sort." +
+                    "</p>";
 
                 return;
             }
@@ -156,10 +174,13 @@ function sortPosts(sortField, direction) {
         });
 }
 
-// Helper function for escaping special HTML characters (protection against XSS)
-// Note: If this function already exists in your main.js, you can leave it there.
+
+// Escape special HTML characters to prevent XSS attacks
 function escapeHtml(text) {
-    if (!text) return "";
+    if (!text) {
+        return "";
+    }
+
     return text
         .toString()
         .replace(/&/g, "&amp;")
@@ -169,92 +190,138 @@ function escapeHtml(text) {
         .replace(/'/g, "&#039;");
 }
 
-// Function to send a POST request to the API to add a new post
+
+// Add a new post
 function addPost() {
-    // Retrieve the values from the input fields
-    var baseUrl = document.getElementById('api-base-url').value;
-    var postTitle = document.getElementById('post-title').value;
-    var postContent = document.getElementById('post-content').value;
-    var postAuthor = document.getElementById('post-author').value;
-    var postDate = document.getElementById('post-date') ? document.getElementById('post-date').value : "";
+    const baseUrl = document.getElementById("api-base-url").value;
+    const postTitle = document.getElementById("post-title").value;
+    const postContent = document.getElementById("post-content").value;
+    const postAuthor = document.getElementById("post-author").value;
 
-    // Use the Fetch API to send a POST request to the /posts endpoint
-    fetch(baseUrl + '/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: postTitle, content: postContent, author: postAuthor, date: postDate })
+    fetch(`${baseUrl}/posts`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            title: postTitle,
+            content: postContent,
+            author: postAuthor
+        })
     })
-    .then(response => response.json())  // Parse the JSON data from the response
-    .then(post => {
-        console.log('Post added:', post);
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(
+                    `HTTP-Fehler! Status: ${response.status}`
+                );
+            }
 
-        document.getElementById('post-title').value = '';
-        document.getElementById('post-content').value = '';
-        document.getElementById('post-author').value = '';
+            return response.json();
+        })
+        .then(post => {
+            console.log("Post added:", post);
 
-        loadPosts(); // Reload the posts after adding a new one
-    })
-    .catch(error => console.error('Error:', error));  // If an error occurs, log it to the console
+            // Clear the input fields after adding the post
+            document.getElementById("post-title").value = "";
+            document.getElementById("post-content").value = "";
+            document.getElementById("post-author").value = "";
+
+            loadPosts();
+        })
+        .catch(error => {
+            console.error("Error adding post:", error);
+        });
 }
 
-// Function to send a DELETE request to the API to delete a post
+
+// Delete a post
 function deletePost(postId) {
-    var baseUrl = document.getElementById('api-base-url').value;
+    const baseUrl = document.getElementById("api-base-url").value;
 
-    fetch(baseUrl + '/posts/' + postId, {
-        method: 'DELETE'
+    fetch(`${baseUrl}/posts/${postId}`, {
+        method: "DELETE"
     })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Post deleted:', data);
-        loadPosts(); // Reload the posts after deleting one
-    })
-    .catch(error => console.error('Error:', error));
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(
+                    `HTTP-Fehler! Status: ${response.status}`
+                );
+            }
+
+            return response.json();
+        })
+        .then(data => {
+            console.log("Post deleted:", data);
+            loadPosts();
+        })
+        .catch(error => {
+            console.error("Error deleting post:", error);
+        });
 }
 
-// Function to send a POST request to the API to like a post
+
+// Like a post
 function likePost(postId) {
-    var baseUrl = document.getElementById('api-base-url').value;
+    const baseUrl = document.getElementById("api-base-url").value;
 
-    fetch(baseUrl + '/posts/' + postId + '/like', {
-        method: 'POST'
+    fetch(`${baseUrl}/posts/${postId}/like`, {
+        method: "POST"
     })
-    .then(response => response.json())
-    .then(post => {
-        console.log('Post liked:', post);
-        loadPosts();
-    })
-    .catch(error => console.error('Error:', error));
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(
+                    `HTTP-Fehler! Status: ${response.status}`
+                );
+            }
+
+            return response.json();
+        })
+        .then(post => {
+            console.log("Post liked:", post);
+            loadPosts();
+        })
+        .catch(error => {
+            console.error("Error liking post:", error);
+        });
 }
 
-// Function to show the edit form for a post
-function editPost(postId) {
-    var baseUrl = document.getElementById('api-base-url').value;
 
-    fetch(baseUrl + '/posts')
-        .then(response => response.json())
+// Show the edit form for a post
+function editPost(postId) {
+    const baseUrl = document.getElementById("api-base-url").value;
+
+    fetch(`${baseUrl}/posts`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(
+                    `HTTP-Fehler! Status: ${response.status}`
+                );
+            }
+
+            return response.json();
+        })
         .then(posts => {
-            var post = posts.find(post => post.id === postId);
+            const post = posts.find(post => post.id === postId);
 
             if (!post) {
-                console.error('Post not found.');
+                console.error("Post not found.");
                 return;
             }
 
             const postContainer =
-                document.getElementById('post-container');
+                document.getElementById("post-container");
 
             const postElements =
-                postContainer.getElementsByClassName('post');
+                postContainer.getElementsByClassName("post");
 
-            for (let postElement of postElements) {
+            for (const postElement of postElements) {
                 const editButton =
-                    postElement.querySelector('.edit-btn');
+                    postElement.querySelector(".edit-btn");
 
                 if (
                     editButton &&
-                    editButton.getAttribute('onclick') ===
-                    `editPost(${postId})`
+                    editButton.getAttribute("onclick") ===
+                        `editPost(${postId})`
                 ) {
                     postElement.innerHTML = `
                         <h2>Edit Post</h2>
@@ -296,35 +363,38 @@ function editPost(postId) {
                 }
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+            console.error("Error editing post:", error);
+        });
 }
 
-// Function to save the edited post
+
+// Save an edited post
 function savePost(postId) {
-    var baseUrl = document.getElementById('api-base-url').value;
+    const baseUrl = document.getElementById("api-base-url").value;
 
-    var newTitle =
-        document.getElementById('edit-title-' + postId).value.trim();
+    const newTitle =
+        document.getElementById(`edit-title-${postId}`).value.trim();
 
-    var newAuthor =
-        document.getElementById('edit-author-' + postId).value.trim();
+    const newAuthor =
+        document.getElementById(`edit-author-${postId}`).value.trim();
 
-    var newContent =
-        document.getElementById('edit-content-' + postId).value.trim();
+    const newContent =
+        document.getElementById(`edit-content-${postId}`).value.trim();
 
     if (
-        newTitle === '' ||
-        newAuthor === '' ||
-        newContent === ''
+        newTitle === "" ||
+        newAuthor === "" ||
+        newContent === ""
     ) {
-        alert('Title, author and content must not be empty.');
+        alert("Title, author and content must not be empty.");
         return;
     }
 
-    fetch(baseUrl + '/posts/' + postId, {
-        method: 'PUT',
+    fetch(`${baseUrl}/posts/${postId}`, {
+        method: "PUT",
         headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json"
         },
         body: JSON.stringify({
             title: newTitle,
@@ -332,11 +402,20 @@ function savePost(postId) {
             author: newAuthor
         })
     })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(
+                    `HTTP-Fehler! Status: ${response.status}`
+                );
+            }
+
+            return response.json();
+        })
         .then(post => {
-            console.log('Post updated:', post);
+            console.log("Post updated:", post);
             loadPosts();
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+            console.error("Error updating post:", error);
+        });
 }
-
