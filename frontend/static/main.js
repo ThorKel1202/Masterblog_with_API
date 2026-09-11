@@ -84,6 +84,42 @@ function loadPosts() {
 }
 
 
+// Function that searches for blog posts
+function searchPosts() {
+    const baseUrl = document.getElementById("api-base-url").value;
+    const searchQuery = document.getElementById("search-input").value;
+
+    fetch(
+        `${baseUrl}/posts/search?search=${encodeURIComponent(searchQuery)}`
+    )
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(
+                    `HTTP-Fehler! Status: ${response.status}`
+                );
+            }
+
+            return response.json();
+        })
+        .then(data => {
+            if (data.length === 0) {
+                const postContainer =
+                    document.getElementById("post-container");
+
+                postContainer.innerHTML =
+                    "<p class='no-results'>No posts found.</p>";
+
+                return;
+            }
+
+            displayPosts(data);
+            document.getElementById("search-input").value = "";
+        })
+        .catch(error => {
+            console.error("Error searching for posts:", error);
+        });
+}
+
 
 // Function to sort blog posts
 function sortPosts(sortField, direction) {
@@ -151,6 +187,11 @@ function addPost() {
     .then(response => response.json())  // Parse the JSON data from the response
     .then(post => {
         console.log('Post added:', post);
+
+        document.getElementById('post-title').value = '';
+        document.getElementById('post-content').value = '';
+        document.getElementById('post-author').value = '';
+
         loadPosts(); // Reload the posts after adding a new one
     })
     .catch(error => console.error('Error:', error));  // If an error occurs, log it to the console
