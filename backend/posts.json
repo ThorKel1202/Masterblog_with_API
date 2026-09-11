@@ -4,27 +4,39 @@
         "title": "First post",
         "content": "This is the first post.",
         "author": "John",
-        "date": "2026-09-10"
+        "date": "2026-09-10",
+        "likes": 1
     },
     {
         "id": 2,
         "title": "Second post",
         "content": "This is the second post.",
         "author": "Lisa",
-        "date": "2026-09-09"
+        "date": "2026-09-09",
+        "likes": 0
     },
     {
         "id": 3,
-        "title": "string",
-        "content": "string",
-        "author": "string",
-        "date": "string"
+        "title": "Editted Title",
+        "content": "Nice text, not only \"String\"",
+        "author": "TK",
+        "date": "2026-09-11",
+        "likes": 1
     },
     {
         "id": 4,
         "title": "Thorsten schreibt Code",
         "content": "some text",
         "author": "Thorsten",
-        "date": "2026-09-10"
+        "date": "2026-09-10",
+        "likes": 0
+    },
+    {
+        "id": 5,
+        "title": "TEST TITLE",
+        "content": "This is the new text",
+        "author": "ThorKel",
+        "date": "2026-09-11",
+        "likes": 0
     }
 ]

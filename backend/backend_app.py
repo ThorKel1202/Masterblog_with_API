@@ -6,10 +6,10 @@ from flask_swagger_ui import get_swaggerui_blueprint
 
 
 def load_posts():
-    """Lädt die Blog-Beiträge aus der JSON-Datei.
+    """Loads the blog posts from the JSON file.
 
     Returns:
-        list: Eine Liste von Dictionaries, die die Beiträge repräsentieren.
+        list: A list of dictionaries representing the entries.
     """
     try:
         with open("posts.json", "r", encoding="utf-8") as file:
@@ -19,10 +19,10 @@ def load_posts():
 
 
 def save_posts(posts):
-    """Speichert die Blog-Beiträge in die JSON-Datei.
+    """Saves the blog posts to the JSON file.
 
     Args:
-        posts (list): Die Liste der zu speichernden Beiträge.
+        posts (list): The list of posts to be saved.
     """
     with open("posts.json", "w", encoding="utf-8") as file:
         json.dump(posts, file, indent=4, ensure_ascii=False)
@@ -46,15 +46,15 @@ app.register_blueprint(swagger_ui_blueprint, url_prefix=SWAGGER_URL)
 
 @app.route("/api/posts", methods=["GET", "POST"])
 def get_post_posts():
-    """Verwaltet das Abrufen und Erstellen von Blog-Beiträgen.
+    """Manages the retrieval and creation of blog posts.
 
-    GET: Gibt eine Liste aller Beiträge zurück, optional sortiert nach 'title',
-        'content', 'author' oder 'date' und 'direction' ('asc' oder 'desc').
-    POST: Erstellt einen neuen Beitrag. Erfordert 'title', 'content',
-        'author' und 'date'.
+    GET: Returns a list of all posts, optionally sorted by 'title',
+        'content', 'author', or 'date' and 'direction' ('asc' or 'desc').
+    POST: Creates a new post. Requires 'title', 'content',
+        'author', and 'date'.
 
     Returns:
-        tuple: JSON-Response und HTTP-Statuscode.
+        tuple: JSON response and HTTP status code.
     """
     if request.method == "GET":
         posts = load_posts()
@@ -142,13 +142,13 @@ def get_post_posts():
 
 @app.route("/api/posts/search", methods=["GET"])
 def search_posts():
-    """Sucht nach Blog-Beiträgen in allen Textfeldern.
+    """Searches for blog posts in all text fields.
 
-    Akzeptiert den Query-Parameter 'search' über die URL. Die Suche ignoriert
-    Groß- und Kleinschreibung und prüft Titel, Inhalt, Autor und Datum.
+    Accepts the 'search' query parameter via the URL. The search is
+    case-insensitive and checks the title, content, author, and date.
 
     Returns:
-        tuple: JSON-Response mit passenden Beiträgen und Statuscode 200.
+        tuple: JSON response with matching posts and status code 200.
     """
     search_query = request.args.get("search", "").lower()
     posts = load_posts()
@@ -173,13 +173,13 @@ def search_posts():
 
 @app.route("/api/posts/<int:id>", methods=["PUT", "DELETE"])
 def update_or_delete_post(id):
-    """Aktualisiert oder löscht einen Blog-Beitrag anhand seiner ID.
+    """Updates or deletes a blog post based on its ID.
 
     Args:
-        id (int): Die eindeutige ID des betroffenen Beitrags.
+        id (int): The unique ID of the affected post.
 
     Returns:
-        tuple: JSON-Response und der HTTP-Statuscode.
+        tuple: JSON response and the HTTP status code.
     """
     posts = load_posts()
 
@@ -205,6 +205,23 @@ def update_or_delete_post(id):
 
                 save_posts(posts)
                 return jsonify(post), 200
+
+    return jsonify({
+        "error": f"Post with id {id} was not found."
+    }), 404
+
+
+@app.route("/api/posts/<int:id>/like", methods=["POST"])
+def like_post(id):
+    """Increase the number of likes for a post."""
+    posts = load_posts()
+
+    for post in posts:
+        if post["id"] == id:
+            post["likes"] += 1
+            save_posts(posts)
+
+            return jsonify(post), 200
 
     return jsonify({
         "error": f"Post with id {id} was not found."

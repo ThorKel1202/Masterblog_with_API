@@ -254,6 +254,35 @@
           }
         }
       }
+    },
+    "/api/posts/{id}/like": {
+      "post": {
+        "summary": "Like a post",
+        "description": "Increase the number of likes for a post by one.",
+        "tags": [
+          "Post"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "ID of the post to like"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Post liked successfully"
+          },
+          "404": {
+            "description": "Post not found"
+          }
+        }
+      }
     }
   }
 }
